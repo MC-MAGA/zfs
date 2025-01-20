@@ -379,11 +379,7 @@ vdev_geom_io(struct g_consumer *cp, int *cmds, void **datas, off_t *offsets,
 	int i, n_bios, j;
 	size_t bios_size;
 
-#if __FreeBSD_version > 1300130
 	maxio = maxphys - (maxphys % cp->provider->sectorsize);
-#else
-	maxio = MAXPHYS - (MAXPHYS % cp->provider->sectorsize);
-#endif
 	n_bios = 0;
 
 	/* How many bios are required for all commands ? */
@@ -1018,21 +1014,6 @@ vdev_geom_io_intr(struct bio *bp)
 		zio->io_error = SET_ERROR(EIO);
 
 	switch (zio->io_error) {
-	case ENOTSUP:
-		/*
-		 * If we get ENOTSUP for BIO_FLUSH or BIO_DELETE we know
-		 * that future attempts will never succeed. In this case
-		 * we set a persistent flag so that we don't bother with
-		 * requests in the future.
-		 */
-		switch (bp->bio_cmd) {
-		case BIO_FLUSH:
-			vd->vdev_nowritecache = B_TRUE;
-			break;
-		case BIO_DELETE:
-			break;
-		}
-		break;
 	case ENXIO:
 		if (!vd->vdev_remove_wanted) {
 			/*
